@@ -1,0 +1,80 @@
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+from tensorflow.examples.tutorials.mnist import input_data
+mnist_data = input_data.read_data_sets("MNIST_data/", one_hot=True)
+
+no_train = mnist_data.train.num_examples 
+no_validation = mnist_data.validation.num_examples  
+no_test = mnist_data.test.num_examples
+no_input = 784  #(28x28 pixels)
+no_hidden1 = 1024 
+no_hidden2 = 512
+no_hidden3 = 256 
+no_output = 10 
+
+learning_rate = 1e-5
+no_iterations = 2000
+batch_size = 256
+dropout = 0.5
+X = tf.placeholder("float", [None, n_input])
+Y = tf.placeholder("float", [None, n_output])
+probe = tf.placeholder(tf.float32)
+weights = {
+    'weight1': tf.Variable(tf.truncated_normal([no_input, no_hidden1], stddev=0.1)),
+    'weight2': tf.Variable(tf.truncated_normal([no_hidden1, no_hidden2], stddev=0.1)),
+    'weight3': tf.Variable(tf.truncated_normal([no_hidden2, no_hidden3], stddev=0.1)),
+    'out': tf.Variable(tf.truncated_normal([no_hidden3, no_output], stddev=0.1)),
+}
+
+biases = {
+    'bias1': tf.Variable(tf.constant(0.1, shape=[no_hidden1])),
+    'bias2': tf.Variable(tf.constant(0.1, shape=[no_hidden2])),
+    'bias3': tf.Variable(tf.constant(0.1, shape=[no_hidden3])),
+    'out': tf.Variable(tf.constant(0.1, shape=[no_output]))
+}
+layer_1 = tf.add(tf.matmul(X, weights['weight1']), biases['bias1'])
+layer_2 = tf.add(tf.matmul(layer_1, weights['weight2']), biases['bias2'])
+layer_3 = tf.add(tf.matmul(layer_2, weights['weight3']), biases['bias3'])
+layer_drop = tf.nn.dropout(layer_3, prob)
+final_layer = tf.matmul(layer_3, weights['out']) + biases['out']
+cross_entropy = tf.reduce_mean(
+    tf.nn.softmax_cross_entropy_with_logits(
+        labels=Y, logits=final_layer
+        ))
+training = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+predict = tf.equal(tf.argmax(final_layer, 1), tf.argmax(Y, 1))
+accuracy = tf.reduce_mean(tf.cast(predict, tf.float32))
+
+init = tf.global_variables_initializer()
+sess = tf.Session()
+sess.run(init)
+
+
+for i in range(no_iterations):
+    x, y = mnist_data.train.next_batch(batch_size)
+    sess.run(training, feed_dict={
+        X: x, Y: y, prob: dropout
+        })
+
+    if i % 100 == 0:
+        minibatch_loss, minibatch_accuracy = sess.run(
+            [cross_entropy, accuracy],
+            feed_dict={X: x, Y: y, prob: 1.0}
+            )
+        print(
+            "Iteration",
+            str(i),
+            "\t| Loss =",
+            str(minibatch_loss),
+            "\t| Accuracy% =",
+            str(minibatch_accuracy*100)
+            )
+test_accuracy = sess.run(accuracy, feed_dict={X: mnist_data.test.images, Y: mnist_data.test.labels, prob: 1.0})
+print("\nAccuracy on test set:", test_accuracy)
+
+img = np.invert(Image.open("number.png").convert('L')).ravel()
+
+prediction = sess.run(tf.argmax(final_layer, 1), feed_dict={X: [img]})
+print ("The number in test image is:", np.squeeze(prediction))

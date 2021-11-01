@@ -1,4 +1,3 @@
-# anisha-project
 Teach a Neural Network to Read Handwriting Neural networks and deep learning are two success stories in modern artificial intelligence. They’ve led to major advances in image recognition, automatic text generation, and even in self-driving cars.
 
 To get involved with this exciting field, you should start with a manageable dataset.
